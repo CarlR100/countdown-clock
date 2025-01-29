@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Clock</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            margin: 0; /* Remove default margin */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Full height for centering */
+        }
+        #countdown {
+            border-radius: 15px; /* More rounded corners */
+            padding: 20px; /* Adjusted padding for a smaller size */
+            text-align: center;
+            position: relative;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); /* Gradient background for the countdown */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+            border: 1px solid #e0e0e0; /* Light border for definition */
+            transition: background-color 0.3s ease; /* Smooth background color transition */
+            width: 250px; /* Set a fixed width for the countdown box */
+            height: auto; /* Allow height to adjust based on content */
+        }
+        .live-indicator {
+            width: 12px; /* Slightly larger indicator */
+            height: 12px;
+            background-color: green;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        #time-display {
+            font-size: 24px; /* Larger font size for the countdown */
+            font-weight: bold; /* Bold text for emphasis */
+            margin-top: 10px; /* Space above the countdown text */
+        }
+        #status-text {
+            font-size: 18px; /* Font size for status text */
+            font-weight: normal; /* Normal weight for status text */
+            margin-top: 10px; /* Space above the status text */
+        }
+    </style>
+</head>
+<body>
+    <div id="countdown">
+        <div class="live-indicator"></div>
+        <div id="time-display">Loading...</div>
+        <div id="status-text">Initializing...</div>
+    </div>
+    <script>
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                lockTime: params.get('lock-time'),
+                completeTime: params.get('complete-time'),
+                resetTime: params.get('reset-time'),
+                dayOfWeek: params.get('day')
+            };
+        }
+
+        function updateCountdown() {
+            const { lockTime, completeTime, resetTime, dayOfWeek } = getQueryParams();
+            const now = new Date();
+            const targetDate = new Date();
+            targetDate.setDate(now.getDate() + ((7 + parseInt(dayOfWeek) - now.getDay()) % 7));
+            const [hours, minutes] = lockTime.split(':').map(Number);
+            targetDate.setHours(hours, minutes, 0, 0);
+
+            const timeDiff = targetDate - now;
+            const timeDisplay = document.getElementById('time-display');
+            const statusText = document.getElementById('status-text');
+
+            if (timeDiff > 0) {
+                timeDisplay.innerText = formatTime(timeDiff);
+                document.getElementById('countdown').style.backgroundColor = 'green';
+                statusText.innerText = 'Building Release';
+            } else if (timeDiff < 0 && now < new Date(targetDate.getTime() + completeTime * 60000)) {
+                timeDisplay.innerText = 'Locked';
+                document.getElementById('countdown').style.backgroundColor = 'yellow';
+                statusText.innerText = 'Changes Locked';
+            } else {
+                timeDisplay.innerText = 'Reset';
+                document.getElementById('countdown').style.backgroundColor = 'red';
+                statusText.innerText = 'Released';
+            }
+        }
+
+        function formatTime(ms) {
+            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+            return `${days}d ${hours}h ${minutes}m`;
+        }
+
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>
